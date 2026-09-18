@@ -65,6 +65,10 @@ sudo apt install ./fosipcore_*_amd64.deb
 
 # Fedora / RHEL
 sudo dnf install ./fosipcore-*.rpm
+
+# Nix (flake)
+nix profile install github:swedishborgie/fosipcore   # install
+nix run github:swedishborgie/fosipcore               # or run without installing
 ```
 
 Then each user activates the service for their own account (one instance

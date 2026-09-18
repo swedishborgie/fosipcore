@@ -85,3 +85,38 @@ cargo generate-rpm            # → target/generate-rpm/fosipcore-<version>-1.<a
 Package metadata (file list, maintainer, post-install scripts) lives in
 `[package.metadata.deb]` / `[package.metadata.generate-rpm]` in `Cargo.toml`
 and `pkgs/debian/postinst`.
+
+### Nix flake
+
+The repo also ships a flake (`flake.nix` → `pkgs/nix/fosipcore.nix`,
+`rustPlatform.buildRustPackage`) that installs the **same file layout** as
+the .deb / .rpm:
+
+| Path | Purpose |
+|------|---------|
+| `<out>/bin/fosipcore` | The binary |
+| `<out>/lib/systemd/system/fosipcore@.service` | Per-user systemd template unit |
+| `<out>/share/fosipcore/example.env` | Example environment config |
+
+```bash
+# Build
+nix build .#fosipcore
+
+# Install
+nix profile install github:swedishborgie/fosipcore
+
+# Run without installing
+nix run github:swedishborgie/fosipcore
+```
+
+Notes:
+
+- The package version comes from `Cargo.toml` (same source the binary bakes in
+  via `build.rs`), so flake and tag-driven versions agree when you bump
+  `Cargo.toml` before tagging.
+- The post-install step that creates `/etc/fosipcore/` (as the deb/rpm do)
+is skipped when `/etc` is not writable (e.g. sandboxed builds); the unit's
+  `EnvironmentFile=-` lines tolerate the directory being absent.
+- On NixOS, prefer managing the template unit through a NixOS module
+  (`systemd.services."fosipcore@<user>"`) rather than the ad-hoc
+  `/etc/fosipcore/` directory.

@@ -9,6 +9,17 @@ permissions:
   contents: write # create the release + upload package assets
 
 jobs:
+  # Build gate for the Nix flake package.
+  # GitHub's ubuntu runners ship Nix in single-user mode; the flags keep the
+  # job working even if the runner image disables flakes by default.
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build flake package
+        run: nix --extra-experimental-features 'nix-command flakes' build .#fosipcore --print-out-paths
+
   build:
     runs-on: ubuntu-latest
     steps:
