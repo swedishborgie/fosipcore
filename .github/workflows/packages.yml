@@ -10,12 +10,16 @@ permissions:
 
 jobs:
   # Build gate for the Nix flake package.
-  # GitHub's ubuntu runners ship Nix in single-user mode; the flags keep the
-  # job working even if the runner image disables flakes by default.
+  # Runner images do not ship Nix, so install the single-user version.
   nix:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Nix (single-user)
+        run: |
+          curl -fsSL https://nixos.org/nix/install | sh
+          echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
 
       - name: Build flake package
         run: nix --extra-experimental-features 'nix-command flakes' build .#fosipcore --print-out-paths
