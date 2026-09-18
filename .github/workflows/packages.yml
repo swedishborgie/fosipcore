@@ -67,5 +67,10 @@ jobs:
         run: |
           tag="${GITHUB_REF#refs/tags/}"
           notes=$'Prebuilt packages: .deb (Ubuntu/Debian), .rpm (Fedora/RHEL).\n\nInstall the package, then activate the service for your user:\n\n    sudo systemctl enable --now fosipcore@<username>\n\nSee the README for full instructions.'
-          gh release create "$tag" --title "fosipcore $tag" --notes "$notes" \
-            dist/*.deb dist/*.rpm
+          # Fresh tag: create the release with title, notes and assets. If a
+          # release already exists for the tag (e.g. created manually), fall
+          # back to just attaching the assets; --clobber keeps re-runs safe.
+          if ! gh release create "$tag" --title "fosipcore $tag" --notes "$notes" \
+              dist/*.deb dist/*.rpm; then
+            gh release upload "$tag" dist/*.deb dist/*.rpm --clobber
+          fi
