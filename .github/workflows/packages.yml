@@ -5,6 +5,9 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+permissions:
+  contents: write # create the release + upload package assets
+
 jobs:
   build:
     runs-on: ubuntu-latest
