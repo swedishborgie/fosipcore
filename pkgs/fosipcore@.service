@@ -1,0 +1,23 @@
+[Unit]
+Description=fosipcore - Foscam web UI WebSocket-to-RTSP bridge (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Template instance: one fosipcore per user, running as that user.
+# Enable with:  sudo systemctl enable --now fosipcore@<username>
+User=%i
+WorkingDirectory=/home/%i
+SyslogIdentifier=fosipcore@%i
+# System-managed config first, per-user overrides second (later wins).
+EnvironmentFile=-/etc/fosipcore/%i.env
+EnvironmentFile=-%h/.config/fosipcore/env
+ExecStart=/usr/bin/fosipcore
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

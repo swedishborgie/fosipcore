@@ -1,0 +1,38 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # Create /etc/fosipcore/ config directory if it doesn't exist
+        if [ ! -d /etc/fosipcore ]; then
+            mkdir -p /etc/fosipcore
+            chmod 755 /etc/fosipcore
+        fi
+
+        # Install example config only if not already present
+        if [ ! -f /etc/fosipcore/example.env ]; then
+            cp /usr/share/fosipcore/example.env /etc/fosipcore/example.env
+            chmod 644 /etc/fosipcore/example.env
+        fi
+
+        systemctl daemon-reload || true
+
+        echo ""
+        echo "╔══════════════════════════════════════════════════════════╗"
+        echo "║              fosipcore — Getting Started                ║"
+        echo "╠══════════════════════════════════════════════════════════╣"
+        echo "║  1. Activate the service for your user:                 ║"
+        echo "║     sudo systemctl enable --now fosipcore@<username>    ║"
+        echo "║                                                          ║"
+        echo "║  2. Optional per-user config (overrides /etc/fosipcore/):║"
+        echo "║     mkdir -p ~/.config/fosipcore                        ║"
+        echo "║     cp /etc/fosipcore/example.env ~/.config/fosipcore/env║"
+        echo "║                                                          ║"
+        echo "║  3. View logs:                                           ║"
+        echo "║     journalctl -u fosipcore@<username> -f               ║"
+        echo "╚══════════════════════════════════════════════════════════╝"
+        echo ""
+        ;;
+esac
+
+exit 0

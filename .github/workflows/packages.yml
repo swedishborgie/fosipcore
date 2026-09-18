@@ -1,0 +1,71 @@
+name: packages
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # dpkg-dev provides dpkg-shlibdeps for cargo-deb's $auto depends.
+      # (No libssl-dev: TLS is rustls, so the build has no native TLS deps.)
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install packaging tools
+        run: cargo install cargo-deb cargo-generate-rpm --locked
+
+      # The version is driven by the git tag on release builds (v0.2.0 →
+      # 0.2.0); non-tag builds fall back to the version in Cargo.toml.
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            version=$(cargo metadata --format-version 1 | jq -r '.packages[0].version')
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Building version: $(cat "$GITHUB_OUTPUT" | cut -d= -f2)"
+
+      - name: Build release binary
+        env:
+          FOSIPCORE_VERSION: ${{ steps.version.outputs.version }}
+        run: cargo build --release
+
+      - name: Build .deb
+        run: cargo deb --no-build --deb-version "${{ steps.version.outputs.version }}"
+
+      - name: Build .rpm
+        run: cargo generate-rpm --set-metadata "version=\"${{ steps.version.outputs.version }}\""
+
+      - name: Collect packages
+        run: |
+          mkdir -p dist
+          cp target/debian/*.deb dist/
+          cp target/generate-rpm/*.rpm dist/
+          ls -l dist/
+
+      - name: Upload packages (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: fosipcore-packages
+          path: dist/
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          notes=$'Prebuilt packages: .deb (Ubuntu/Debian), .rpm (Fedora/RHEL).\n\nInstall the package, then activate the service for your user:\n\n    sudo systemctl enable --now fosipcore@<username>\n\nSee the README for full instructions.'
+          gh release create "$tag" --title "fosipcore $tag" --notes "$notes" \
+            dist/*.deb dist/*.rpm

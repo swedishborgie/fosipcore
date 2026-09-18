@@ -1,0 +1,97 @@
+[package]
+name = "fosipcore"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT"
+description = "Rust WebSocket-to-RTSP proxy that lets legacy Foscam IP camera web UIs stream live video and audio in a modern browser, replacing the obsolete Windows IPCWebComponents.exe plugin"
+repository = "https://github.com/swedishborgie/fosipcore"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
+tungstenite = "0.26"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "charset", "http2", "rustls-tls"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+base64 = "0.22"
+urlencoding = "2"
+futures-util = "0.3"
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio", "server-auto"] }
+http-body-util = "0.1"
+bytes = "1"
+tokio-stream = "0.1"
+md-5 = "0.10"
+oxideav-aac = "0.1.7"
+
+[package.metadata.deb]
+maintainer = "Michael Powers <swedishborgie@gmail.com>"
+extended-description = """
+fosipcore is a Rust WebSocket-to-RTSP proxy that lets legacy Foscam IP
+camera web UIs stream live video and audio in a modern browser, replacing
+the obsolete Windows IPCWebComponents.exe companion plugin.
+"""
+depends = "$auto"
+section = "net"
+priority = "optional"
+maintainer-scripts = "pkgs/debian/"
+assets = [
+    { source = "target/release/fosipcore", dest = "/usr/bin/fosipcore", mode = "755" },
+    { source = "pkgs/fosipcore@.service", dest = "/lib/systemd/system/fosipcore@.service", mode = "644" },
+    { source = "pkgs/example.env", dest = "/usr/share/fosipcore/example.env", mode = "644" },
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/fosipcore", dest = "/usr/bin/fosipcore", mode = "755" },
+    { source = "pkgs/fosipcore@.service", dest = "/lib/systemd/system/fosipcore@.service", mode = "644" },
+    { source = "pkgs/example.env", dest = "/usr/share/fosipcore/example.env", mode = "644" },
+]
+post_install_script = """
+set -e
+if [ ! -d /etc/fosipcore ]; then
+    mkdir -p /etc/fosipcore
+    chmod 755 /etc/fosipcore
+fi
+if [ ! -f /etc/fosipcore/example.env ]; then
+    cp /usr/share/fosipcore/example.env /etc/fosipcore/example.env
+    chmod 644 /etc/fosipcore/example.env
+fi
+systemctl daemon-reload || true
+echo ""
+echo "fosipcore installed. To get started:"
+echo ""
+echo "  Activate the service for your user:"
+echo "    sudo systemctl enable --now fosipcore@<username>"
+echo ""
+echo "  Optional per-user config (overrides /etc/fosipcore/):"
+echo "    mkdir -p ~/.config/fosipcore"
+echo "    cp /etc/fosipcore/example.env ~/.config/fosipcore/env"
+echo ""
+echo "  View logs:"
+echo "    journalctl -u fosipcore@<username> -f"
+"""
+
+[profile.release]
+strip = "symbols"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+dead_code = "warn"
+unused_imports = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+all = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+# Requires `/// # Errors` doc comments on every `Result`-returning function —
+# valuable in libraries, excessive overhead for a small binary.
+missing_errors_doc = "allow"
+# Meta-lint about lint priority ordering in groups — harmless, always allowed.
+lint_groups_priority = "allow"

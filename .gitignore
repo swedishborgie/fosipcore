@@ -1,0 +1,6 @@
+/target
+dist/
+.idea
+.vscode
+*.rs.bk
+config.toml
