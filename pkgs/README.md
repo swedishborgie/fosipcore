@@ -117,6 +117,10 @@ Notes:
 - The post-install step that creates `/etc/fosipcore/` (as the deb/rpm do)
 is skipped when `/etc` is not writable (e.g. sandboxed builds); the unit's
   `EnvironmentFile=-` lines tolerate the directory being absent.
-- On NixOS, prefer managing the template unit through a NixOS module
-  (`systemd.services."fosipcore@<user>"`) rather than the ad-hoc
-  `/etc/fosipcore/` directory.
+- On NixOS, use the flake's NixOS module (`nixosModules.default`, see the
+  main README's [NixOS section](../README.md#nixos)) instead of
+  `systemd.services."fosipcore@<user>"` by hand: the packaged unit's
+  `ExecStart=/usr/bin/fosipcore` does not exist on NixOS, and enabling the
+  template instance directly gets shadowed by a generated unit that drops
+  `User=` / `EnvironmentFile=`. The module emits a proper drop-in for each
+  instance and only overrides `ExecStart`.

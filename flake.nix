@@ -16,6 +16,11 @@
       # `nix fmt` for the flake files.
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-rfc-style;
       formatter.aarch64-linux = nixpkgs.legacyPackages.aarch64-linux.nixfmt-rfc-style;
+
+      # NixOS module: `services.fosipcore.enable + users.<name>.enable`
+      # wires up the package's fosipcore@.service template unit (see
+      # nixos/fosipcore.nix for details and usage).
+      nixosModules.default = import ./nixos/fosipcore.nix;
     }
     // flake-utils.lib.eachDefaultSystem (
       system:

@@ -86,6 +86,42 @@ Optional per-user configuration: `~/.config/fosipcore/env` (start from
 
 To build packages yourself, see [pkgs/README.md](pkgs/README.md).
 
+### NixOS
+
+The flake ships a NixOS module that installs the package and (optionally) wires
+up the per-user service instances (it reuses the packaged `fosipcore@.service`
+template unit and only fixes its `ExecStart`, which points at
+`/usr/bin/fosipcore` and cannot work on NixOS):
+
+```nix
+# flake.nix
+inputs.fosipcore.url = "github:swedishborgie/fosipcore";
+
+# configuration.nix (or the flake's nixosConfigurations modules list)
+{
+  imports = [ inputs.fosipcore.nixosModules.default ]; # or: modules = [ ... ]
+
+  services.fosipcore = {
+    enable = true;
+
+    # Opt-in: if you enable no users, only the package is installed (binary
+    # on the default PATH) and no systemd units are created.
+    users.<username> = {
+      enable = true;        # one instance per enabled user
+      autostart = true;     # default; false installs the unit but does not start it at boot
+    };
+  };
+}
+```
+
+With `users.<username>.enable = true`, `fosipcore@<username>` starts at boot,
+running as that user, with config from `~/.config/fosipcore/env` (same as the
+packaged service; see [Environment variables](#environment-variables)). Set
+`autostart = false` to install the unit without starting it at boot — start it
+manually with `systemctl start fosipcore@<username>`. `services.fosipcore.package`
+overrides the package if you build fosipcore yourself (e.g. to pass
+`installSystemdUnit = false` and ship no unit at all).
+
 ### Environment variables
 
 | Variable | Default | Description |
