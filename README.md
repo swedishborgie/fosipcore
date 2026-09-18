@@ -20,14 +20,14 @@ flowchart LR
     end
 
     subgraph server["fosipcore"]
-        SM[Service manager<br/>WS :50000]
-        CORE[Core server<br/>WS :50001]
-        HTTP[HTTP-FLV listener<br/>:livePort (one per session)]
+        SM["Service manager<br/>WS :50000"]
+        CORE["Core server<br/>WS :50001"]
+        HTTP["HTTP-FLV listener<br/>:livePort (one per session)"]
     end
 
     subgraph camera["Camera"]
-        CGI[HTTP CGI API]
-        RTSP[RTSP server<br/>:88]
+        CGI["HTTP CGI API"]
+        RTSP["RTSP server<br/>:88"]
     end
 
     UI -- "WebSocket (control, login, CGI)" --> CORE
@@ -236,7 +236,7 @@ flowchart LR
     CLIENT --> RTP[RTP parser<br/>FU-A reassembly]
     RTP --> MUX[FLV muxer]
     MUX --> BCAST[broadcast channel]
-    BCAST --> HTTP[HTTP server :livePort (per session)]
+    BCAST --> HTTP["HTTP server :livePort (per session)"]
     HTTP --> P1["/live/playlist1.json<br/>(manifest)"]
     HTTP --> S1["/live/stream1.flv<br/>(H.264)"]
 ```
@@ -249,7 +249,7 @@ flowchart LR
     DECODE --> ENCODE[AAC-LC encode<br/>oxideav-aac]
     ENCODE --> TAGS[FLV audio tags]
     TAGS --> BCAST[broadcast channel]
-    BCAST --> HTTP[HTTP server :livePort (per session)]
+    BCAST --> HTTP["HTTP server :livePort (per session)"]
     HTTP --> P2["/live/playlist2.json<br/>(manifest)"]
     HTTP --> S2["/live/stream2.flv<br/>(AAC)"]
 ```
