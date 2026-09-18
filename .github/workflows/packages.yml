@@ -63,7 +63,7 @@ jobs:
         run: cargo deb --no-build --deb-version "${{ steps.version.outputs.version }}"
 
       - name: Build .rpm
-        run: cargo generate-rpm --no-build --set-metadata "version=\"${{ steps.version.outputs.version }}\""
+        run: cargo generate-rpm --set-metadata "version=\"${{ steps.version.outputs.version }}\""
 
       - name: Collect packages
         run: |
