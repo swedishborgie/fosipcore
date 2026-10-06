@@ -49,7 +49,7 @@
 let
   cfg = config.services.fosipcore;
   enabledUsers = lib.filterAttrs (_: userCfg: userCfg.enable) cfg.users;
-  anyEnabled = enabledUsers != {};
+  anyEnabled = enabledUsers != { };
 in
 {
   options.services.fosipcore = {
@@ -94,13 +94,10 @@ in
   };
 
   config = {
-    assertions =
-      lib.mapAttrsToList (
-        name: userCfg: {
-          assertion = !userCfg.enable || cfg.enable;
-          message = "services.fosipcore.users.${name}.enable requires services.fosipcore.enable = true;";
-        }
-      ) cfg.users;
+    assertions = lib.mapAttrsToList (name: userCfg: {
+      assertion = !userCfg.enable || cfg.enable;
+      message = "services.fosipcore.users.${name}.enable requires services.fosipcore.enable = true;";
+    }) cfg.users;
 
     # Puts the binary on the default PATH (convenience; the service itself
     # references the store path directly, so this is not required for the
@@ -115,20 +112,22 @@ in
     systemd.packages = lib.mkIf (cfg.enable && anyEnabled) [ cfg.package ];
 
     # One instance per enabled user.
-    systemd.services = lib.mkIf (cfg.enable && anyEnabled) (lib.mapAttrs' (
-      username: userCfg:
-      lib.nameValuePair "fosipcore@${username}" {
-        # The unit stays enabled (i.e. not masked to /dev/null) even when
-        # autostart is false, so it can be started manually.
-        enable = true;
-        wantedBy = lib.optionals userCfg.autostart [ "multi-user.target" ];
-        # Emit a drop-in for the instance, extending the packaged template
-        # unit rather than generating a full unit that would shadow it.
-        overrideStrategy = "asDropin";
-        # The packaged unit's ExecStart (/usr/bin/fosipcore) does not exist
-        # on NixOS; point it at the real binary.
-        serviceConfig.ExecStart = [ (lib.getExe cfg.package) ];
-      }
-    ) enabledUsers);
+    systemd.services = lib.mkIf (cfg.enable && anyEnabled) (
+      lib.mapAttrs' (
+        username: userCfg:
+        lib.nameValuePair "fosipcore@${username}" {
+          # The unit stays enabled (i.e. not masked to /dev/null) even when
+          # autostart is false, so it can be started manually.
+          enable = true;
+          wantedBy = lib.optionals userCfg.autostart [ "multi-user.target" ];
+          # Emit a drop-in for the instance, extending the packaged template
+          # unit rather than generating a full unit that would shadow it.
+          overrideStrategy = "asDropin";
+          # The packaged unit's ExecStart (/usr/bin/fosipcore) does not exist
+          # on NixOS; point it at the real binary.
+          serviceConfig.ExecStart = [ (lib.getExe cfg.package) ];
+        }
+      ) enabledUsers
+    );
   };
 }

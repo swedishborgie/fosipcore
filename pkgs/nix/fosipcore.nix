@@ -66,7 +66,7 @@ rustPlatform.buildRustPackage {
     # triple-stamped subdirectory of the target root.
     install -Dm755 target/${stdenv.hostPlatform.config}/release/fosipcore $out/bin/fosipcore
     ${lib.optionalString installSystemdUnit ''
-    install -Dm644 ${root}/pkgs/fosipcore@.service $out/lib/systemd/system/fosipcore@.service
+      install -Dm644 ${root}/pkgs/fosipcore@.service $out/lib/systemd/system/fosipcore@.service
     ''}
     install -Dm644 ${root}/pkgs/example.env $out/share/fosipcore/example.env
 
